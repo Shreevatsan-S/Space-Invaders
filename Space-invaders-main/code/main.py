@@ -1,7 +1,7 @@
 import pygame, sys
 from player import Player
 import obstacle
-from alien import Alien, Extra
+from alien import Alien
 from random import choice, randint
 from laser import Laser
  
@@ -47,16 +47,31 @@ class Game:
 
 		#game over state
 		self.game_over = False
+		self.won = False
 
 	#game_over function, i named as end_game or else it will conflict with the boolean variable game_over
-	def end_game(self):
+	def end_game(self, won=False):
 		self.game_over = True
+		self.won = won
 		self.music.stop() 
-		game_over_surf = self.font.render('Game Over', False, 'red')
+		if won:
+			message = 'You Won!'
+			game_over_surf = self.font.render(message, False, 'green')
+		else:
+			message = 'Game Over'
+			game_over_surf = self.font.render(message, False, 'red')
 		game_over_rect = game_over_surf.get_rect(center = (screen_width / 2, screen_height / 2))
+		restart_surf = self.font.render('PRESS r TO RESTART', False, 'white')
+		restart_rect = restart_surf.get_rect(center = (screen_width / 2, screen_height / 2 + 50))
 		screen.blit(game_over_surf, game_over_rect)
+		screen.blit(restart_surf, restart_rect)
 		pygame.display.flip()
 
+
+	def restart_game(self):
+		self.__init__()
+
+	#function to define an obstacle (blocks that both player and aliens can hide behind)
 	def create_obstacle(self, x_start, y_start,offset_x):
 		for row_index, row in enumerate(self.shape):
 			for col_index,col in enumerate(row):
@@ -105,12 +120,6 @@ class Game:
 			self.alien_lasers.add(laser_sprite)
 			self.laser_sound.play()
 
-	def extra_alien_timer(self):
-		self.extra_spawn_time -= 1
-		if self.extra_spawn_time <= 0:
-			self.extra.add(Extra(choice(['right','left']),screen_width))
-			self.extra_spawn_time = randint(400,800)
-
 	def collision_checks(self):
 
 		# player lasers 
@@ -126,6 +135,7 @@ class Game:
 				if aliens_hit:
 					for alien in aliens_hit:
 						self.score += alien.value
+					#comment this laser.kill() if you want cheats lol
 					laser.kill()
 					self.explosion_sound.play()
 
@@ -166,20 +176,16 @@ class Game:
 		screen.blit(score_surf,score_rect)
 
 	def victory_message(self):
-		if not self.aliens.sprites():
-			victory_surf = self.font.render('You won',False,'white')
-			victory_rect = victory_surf.get_rect(center = (screen_width / 2, screen_height / 2))
-			screen.blit(victory_surf,victory_rect)
+		if not self.aliens.sprites() and not self.game_over:
+			self.end_game(won=True)
 
 	def run(self):
 		if not self.game_over:
 			self.player.update()
 			self.alien_lasers.update()
-			self.extra.update()
 			
 			self.aliens.update(self.alien_direction)
 			self.alien_position_checker()
-			self.extra_alien_timer()
 			self.collision_checks()
 			
 			self.player.sprite.lasers.draw(screen)
@@ -187,7 +193,6 @@ class Game:
 			self.blocks.draw(screen)
 			self.aliens.draw(screen)
 			self.alien_lasers.draw(screen)
-			self.extra.draw(screen)
 			self.display_lives()
 			self.display_score()
 			self.victory_message()
@@ -210,12 +215,17 @@ if __name__ == '__main__':
 				sys.exit()
 			if event.type == ALIENLASER and not game.game_over:
 				game.alien_shoot()
+			if event.type == pygame.KEYDOWN:
+				if event.key == pygame.K_r:
+					if game.game_over:
+						game.restart_game()
 
 		screen.fill((30,30,30))
 		game.run()
 
 		if game.game_over:
-			game.end_game()
+			game.end_game(game.won)
+  
 		
 		pygame.display.flip()
 		clock.tick(60)
