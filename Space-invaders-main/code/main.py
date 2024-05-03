@@ -32,10 +32,6 @@ class Game:
 		self.alien_setup(rows = 6, cols = 8) #no of aliens, can easily be changed based on difficulty (we can add multiple levels if needed with varying amts of aliens)
 		self.alien_direction = 1
 
-		# Extra setup
-		self.extra = pygame.sprite.GroupSingle()
-		self.extra_spawn_time = randint(40,80)
-
 		# Audio
 		self.music = pygame.mixer.Sound('../audio/music.wav')  #added self. to music object so that we can stop music when game ends
 		self.music.set_volume(0.2)
@@ -139,10 +135,6 @@ class Game:
 					laser.kill()
 					self.explosion_sound.play()
 
-				# extra collision
-				if pygame.sprite.spritecollide(laser,self.extra,True):
-					self.score += 500
-					laser.kill()
 
 		# alien lasers 
 		if self.alien_lasers:
